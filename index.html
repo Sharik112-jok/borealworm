@@ -5,109 +5,62 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { 
-            font-family: 'Segoe UI', sans-serif; 
-            background: #0f172a; 
-            color: white; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            height: 100vh; 
-            margin: 0; 
-            overflow: hidden;
-        }
+        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; overflow: hidden; }
+        .card { background: #1e293b; border: 1px solid #38bdf8; border-radius: 24px; padding: 25px; width: 85%; max-width: 320px; box-shadow: 0 20px 50px rgba(0,0,0,0.7); text-align: center; }
         
-        .card { 
-            background: #1e293b; 
-            border: 1px solid #38bdf8; 
-            border-radius: 24px; 
-            padding: 30px; 
-            width: 85%; 
-            max-width: 320px; 
-            box-shadow: 0 20px 50px rgba(0,0,0,0.7); 
-            text-align: center;
-        }
+        .top-stats { display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 12px; color: #94a3b8; text-transform: uppercase; font-weight: bold; }
+        .stat-box { background: #0f172a; padding: 5px 10px; border-radius: 8px; border: 1px solid #334155; }
 
-        /* Контейнер для Tenor GIF */
-        .gif-wrapper {
-            width: 160px;
-            height: 160px;
-            margin: 0 auto 20px auto;
-            border-radius: 20px;
-            overflow: hidden; /* Обрезает надписи Tenor */
-            border: 2px solid #38bdf8;
-            box-shadow: 0 0 15px #38bdf8;
-            position: relative;
-            animation: pulse-glow 2s infinite ease-in-out;
-        }
+        .gif-wrapper { width: 140px; height: 140px; margin: 0 auto 15px auto; border-radius: 20px; overflow: hidden; border: 2px solid #38bdf8; position: relative; animation: pulse-glow 2s infinite ease-in-out; }
+        .tenor-gif-embed { transform: scale(1.1); pointer-events: none; }
 
-        /* Чтобы гифка заполняла весь квадрат */
-        .tenor-gif-embed {
-            transform: scale(1.1); /* Слегка увеличиваем, чтобы скрыть края */
-            pointer-events: none; /* Чтобы нельзя было кликнуть */
-        }
+        @keyframes pulse-glow { 0% { box-shadow: 0 0 10px #38bdf8; } 50% { box-shadow: 0 0 20px #818cf8; } 100% { box-shadow: 0 0 10px #38bdf8; } }
 
-        @keyframes pulse-glow {
-            0% { box-shadow: 0 0 10px #38bdf8; border-color: #38bdf8; }
-            50% { box-shadow: 0 0 25px #818cf8; border-color: #818cf8; }
-            100% { box-shadow: 0 0 10px #38bdf8; border-color: #38bdf8; }
-        }
-
-        h2 { color: #38bdf8; margin: 0; text-transform: uppercase; letter-spacing: 2px; font-size: 20px; }
-        .lvl { font-size: 16px; margin: 8px 0; color: #94a3b8; font-weight: bold; }
+        h2 { color: #38bdf8; margin: 5px 0; text-transform: uppercase; letter-spacing: 1px; font-size: 18px; }
         
-        .progress-bg { background: #334155; height: 12px; border-radius: 10px; width: 100%; margin: 20px 0; overflow: hidden; }
-        .progress-fill { 
-            background: linear-gradient(90deg, #38bdf8, #818cf8); 
-            height: 100%; 
-            width: 0%; 
-            transition: width 1.5s ease-out; 
-            box-shadow: 0 0 10px #38bdf8;
-        }
-
-        .xp-text { font-size: 14px; color: #cbd5e1; }
+        .progress-bg { background: #334155; height: 10px; border-radius: 10px; width: 100%; margin: 15px 0; overflow: hidden; }
+        .progress-fill { background: linear-gradient(90deg, #38bdf8, #818cf8); height: 100%; width: 0%; transition: width 1.5s ease-out; }
+        
+        .footer { font-size: 11px; color: #64748b; margin-top: 10px; }
     </style>
 </head>
 <body>
     <div class="card">
+        <div class="top-stats">
+            <div class="stat-box" id="lvl_display">LVL 1</div>
+            <div class="stat-box" id="tasks_display">ЗАДАЧИ: 0/7</div>
+        </div>
+
         <div class="gif-wrapper">
-            <div class="tenor-gif-embed" 
-                 data-postid="12591876056098121434" 
-                 data-share-method="host" 
-                 data-aspect-ratio="1" 
-                 data-width="100%">
-            </div>
+            <div class="tenor-gif-embed" data-postid="12591876056098121434" data-share-method="host" data-aspect-ratio="1" data-width="100%"></div>
             <script type="text/javascript" async src="https://tenor.com/embed.js"></script>
         </div>
         
         <h2 id="name">ГЕРОЙ</h2>
-        <div class="lvl" id="lvl_display">УРОВЕНЬ 1</div>
         
         <div class="progress-bg">
             <div id="bar" class="progress-fill"></div>
         </div>
         
-        <div class="xp-text" id="xp_display">XP: 0 / 100</div>
+        <div style="font-size: 13px;" id="xp_display">ОПЫТ: 0 / 100</div>
+        <div class="footer">BorealWorm System v2.0</div>
     </div>
 
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand();
 
-        // Получаем XP и LVL из параметров ссылки
         const urlParams = new URLSearchParams(window.location.search);
         const xp = parseInt(urlParams.get('xp')) || 0;
         const lvl = parseInt(urlParams.get('lvl')) || 1;
+        const tasks = parseInt(urlParams.get('tasks')) || 0;
 
-        // Заполняем данные
         document.getElementById('name').innerText = (tg.initDataUnsafe.user?.first_name || "ГЕРОЙ").toUpperCase();
-        document.getElementById('lvl_display').innerText = `УРОВЕНЬ ${lvl}`;
+        document.getElementById('lvl_display').innerText = `LVL ${lvl}`;
+        document.getElementById('tasks_display').innerText = `ЗАДАЧИ: ${tasks}/7`;
         document.getElementById('xp_display').innerText = `ОПЫТ: ${xp} / 100`;
         
-        // Запускаем полоску прогресса
-        setTimeout(() => {
-            document.getElementById('bar').style.width = xp + '%';
-        }, 500);
+        setTimeout(() => { document.getElementById('bar').style.width = xp + '%'; }, 500);
     </script>
 </body>
 </html>
