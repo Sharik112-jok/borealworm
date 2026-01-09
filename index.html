@@ -2,44 +2,104 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: white; text-align: center; padding: 20px; }
-        .card { background: #1e293b; border: 1px solid #38bdf8; border-radius: 20px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }
-        h2 { color: #38bdf8; margin: 0; text-transform: uppercase; }
-        .lvl { font-size: 18px; margin: 10px 0; color: #94a3b8; }
-        .progress-bg { background: #334155; height: 15px; border-radius: 10px; width: 100%; margin: 15px 0; }
-        .progress-fill { background: linear-gradient(90deg, #38bdf8, #818cf8); height: 100%; border-radius: 10px; width: 0%; transition: 1s; }
+        body { 
+            font-family: 'Segoe UI', sans-serif; 
+            background: #0f172a; 
+            color: white; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+        }
+        
+        .card { 
+            background: #1e293b; 
+            border: 1px solid #38bdf8; 
+            border-radius: 24px; 
+            padding: 30px; 
+            width: 85%; 
+            max-width: 350px; 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.7); 
+            text-align: center;
+        }
+
+        /* Контейнер для гифки */
+        .gif-container {
+            margin-bottom: 20px;
+            position: relative;
+            display: inline-block;
+        }
+
+        .hero-gif { 
+            width: 140px; 
+            height: 140px; 
+            border-radius: 20px; 
+            object-fit: cover;
+            border: 2px solid #38bdf8;
+            /* Анимация свечения */
+            animation: pulse-glow 2s infinite ease-in-out;
+        }
+
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 10px #38bdf8; }
+            50% { box-shadow: 0 0 25px #818cf8; }
+            100% { box-shadow: 0 0 10px #38bdf8; }
+        }
+
+        h2 { color: #38bdf8; margin: 0; text-transform: uppercase; letter-spacing: 2px; font-size: 22px; }
+        .lvl { font-size: 16px; margin: 8px 0; color: #94a3b8; font-weight: bold; }
+        
+        .progress-bg { background: #334155; height: 12px; border-radius: 10px; width: 100%; margin: 20px 0; overflow: hidden; }
+        .progress-fill { 
+            background: linear-gradient(90deg, #38bdf8, #818cf8); 
+            height: 100%; 
+            width: 0%; 
+            transition: width 1.5s cubic-bezier(0.17, 0.67, 0.83, 0.67); 
+            box-shadow: 0 0 10px #38bdf8;
+        }
+
+        .xp-text { font-size: 14px; color: #cbd5e1; }
     </style>
 </head>
 <body>
     <div class="card">
-        <h2 id="name">ГЕРОЙ</h2>
+        <div class="gif-container">
+            <img src="hero.gif" class="hero-gif" alt="Hero Animation">
+        </div>
+        
+        <h2 id="name">ЗАГРУЗКА...</h2>
         <div class="lvl" id="lvl_display">УРОВЕНЬ 1</div>
+        
         <div class="progress-bg">
             <div id="bar" class="progress-fill"></div>
         </div>
-        <div id="xp_display">XP: 0/100</div>
+        
+        <div class="xp-text" id="xp_display">XP: 0 / 100</div>
     </div>
 
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand();
+        tg.headerColor = '#0f172a';
 
-        // ЧИТАЕМ ДАННЫЕ ИЗ ССЫЛКИ
+        // Читаем данные из URL
         const urlParams = new URLSearchParams(window.location.search);
         const xp = parseInt(urlParams.get('xp')) || 0;
         const lvl = parseInt(urlParams.get('lvl')) || 1;
 
-        // ОТОБРАЖАЕМ
-        document.getElementById('name').innerText = tg.initDataUnsafe.user.first_name.toUpperCase();
+        // Применяем данные
+        document.getElementById('name').innerText = (tg.initDataUnsafe.user?.first_name || "ГЕРОЙ").toUpperCase();
         document.getElementById('lvl_display').innerText = `УРОВЕНЬ ${lvl}`;
-        document.getElementById('xp_display').innerText = `XP: ${xp}/100`;
+        document.getElementById('xp_display').innerText = `ОПЫТ: ${xp} / 100`;
         
-        // Анимируем полоску
+        // Анимация полоски при запуске
         setTimeout(() => {
             document.getElementById('bar').style.width = xp + '%';
-        }, 500);
+        }, 300);
     </script>
 </body>
 </html>
