@@ -5,50 +5,60 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #0f172a; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; overflow: hidden; }
-        .card { background: #1e293b; border: 1px solid #38bdf8; border-radius: 24px; padding: 25px; width: 85%; max-width: 300px; box-shadow: 0 20px 50px rgba(0,0,0,0.7); text-align: center; animation: slideUp 0.6s ease-out; }
-        @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background: #000; color: #fff; margin: 0; padding: 20px; 
+        }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .header h1 { font-size: 28px; font-weight: 700; margin: 0; }
+        .date { color: #8e8e93; font-size: 14px; }
+
+        .task-card {
+            background: #1c1c1e;
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-left: 4px solid #0a84ff; /* Синий для обычных задач */
+        }
+        .task-info h3 { margin: 0; font-size: 17px; font-weight: 500; }
+        .task-info p { margin: 4px 0 0; color: #8e8e93; font-size: 13px; }
         
-        .top-stats { display: flex; justify-content: space-between; margin-bottom: 15px; font-size: 11px; color: #94a3b8; font-weight: bold; }
-        .stat-box { background: #0f172a; padding: 4px 8px; border-radius: 6px; border: 1px solid #334155; }
-
-        .gif-wrapper { width: 150px; height: 150px; margin: 0 auto 15px auto; border-radius: 20px; overflow: hidden; border: 2px solid #38bdf8; animation: pulse 2s infinite; }
-        .tenor-gif-embed { transform: scale(1.1); pointer-events: none; }
-        @keyframes pulse { 0%, 100% { box-shadow: 0 0 10px #38bdf8; } 50% { box-shadow: 0 0 25px #818cf8; } }
-
-        h2 { color: #38bdf8; margin: 5px 0; text-transform: uppercase; font-size: 18px; letter-spacing: 1px; }
-        .progress-bg { background: #334155; height: 10px; border-radius: 10px; width: 100%; margin: 15px 0; overflow: hidden; }
-        .progress-fill { background: linear-gradient(90deg, #38bdf8, #818cf8); height: 100%; width: 0%; transition: width 1.2s cubic-bezier(0.22, 1, 0.36, 1); }
-        .xp-text { font-size: 13px; color: #cbd5e1; }
+        .check {
+            width: 24px; height: 24px; border: 2px solid #3a3a3c; border-radius: 50%;
+        }
     </style>
 </head>
 <body>
-    <div class="card">
-        <div class="top-stats">
-            <div id="lvl_display" class="stat-box">LVL 1</div>
-            <div id="tasks_display" class="stat-box">КВЕСТЫ: 0/7</div>
+    <div class="header">
+        <div>
+            <h1 id="user-name">Задачи</h1>
+            <div class="date" id="current-date">9 января</div>
         </div>
-        <div class="gif-wrapper">
-            <div class="tenor-gif-embed" data-postid="12591876056098121434" data-share-method="host" data-aspect-ratio="1" data-width="100%"></div>
-            <script type="text/javascript" async src="https://tenor.com/embed.js"></script>
-        </div>
-        <h2 id="name">ГЕРОЙ</h2>
-        <div class="progress-bg"><div id="bar" class="progress-fill"></div></div>
-        <div class="xp-text" id="xp_display">ОПЫТ: 0 / 100</div>
     </div>
+
+    <div id="task-list">
+        <div class="task-card">
+            <div class="task-info">
+                <h3>Подготовить отчет</h3>
+                <p>⏰ Сегодня в 18:00</p>
+            </div>
+            <div class="check"></div>
+        </div>
+    </div>
+
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand();
-        tg.HapticFeedback.impactOccurred('medium');
-        const urlParams = new URLSearchParams(window.location.search);
-        const xp = parseInt(urlParams.get('xp')) || 0;
-        const lvl = parseInt(urlParams.get('lvl')) || 1;
-        const tasks = parseInt(urlParams.get('tasks')) || 0;
-        document.getElementById('name').innerText = (tg.initDataUnsafe.user?.first_name || "ГЕРОЙ").toUpperCase();
-        document.getElementById('lvl_display').innerText = `LVL ${lvl}`;
-        document.getElementById('tasks_display').innerText = `КВЕСТЫ: ${tasks}/7`;
-        document.getElementById('xp_display').innerText = `ОПЫТ: ${xp} / 100`;
-        setTimeout(() => { document.getElementById('bar').style.width = xp + '%'; }, 400);
+        tg.backgroundColor = '#000000';
+        tg.headerColor = '#000000';
+
+        document.getElementById('user-name').innerText = tg.initDataUnsafe.user?.first_name || "Мои задачи";
+        
+        const options = { month: 'long', day: 'numeric' };
+        document.getElementById('current-date').innerText = new Date().toLocaleDateString('ru-RU', options);
     </script>
 </body>
 </html>
