@@ -5,79 +5,171 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --bg: #000; --card: #1c1c1e; --blue: #0a84ff; --text: #fff; --grey: #8e8e93; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); padding: 20px; margin: 0; }
-        .header h1 { font-size: 28px; margin: 0; }
-        .header p { color: var(--grey); margin: 5px 0 25px; }
-        
+        :root {
+            --bg: #000000;
+            --card: #1c1c1e;
+            --blue: #0a84ff;
+            --text: #ffffff;
+            --grey: #8e8e93;
+            --red: #ff3b30;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            -webkit-user-select: none;
+        }
+
+        .header {
+            margin-bottom: 24px;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .header h1 { font-size: 32px; font-weight: 700; margin: 0; }
+        .header p { color: var(--grey); font-size: 15px; margin: 5px 0 0; text-transform: capitalize; }
+
+        .task-list { display: flex; flex-direction: column; gap: 12px; }
+
         .task-card {
-            background: var(--card); border-radius: 12px; padding: 16px; 
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 10px; transition: all 0.3s;
+            background: var(--card);
+            border-radius: 16px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            animation: slideIn 0.4s ease-out forwards;
+            border-left: 4px solid var(--blue);
         }
-        .task-info h3 { margin: 0; font-size: 17px; }
-        .task-info span { color: var(--grey); font-size: 13px; }
-        
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideIn { 
+            from { opacity: 0; transform: translateX(-10px); } 
+            to { opacity: 1; transform: translateX(0); } 
+        }
+
+        .category-icon {
+            font-size: 24px;
+            margin-right: 15px;
+            background: #2c2c2e;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+        }
+
+        .task-info { flex-grow: 1; }
+        .task-info h3 { margin: 0; font-size: 17px; font-weight: 600; }
+        .task-info span { color: var(--grey); font-size: 13px; margin-top: 4px; display: block; }
+
         .check-btn {
-            width: 26px; height: 26px; border: 2px solid #3a3a3c; 
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            cursor: pointer; color: transparent; font-size: 14px;
+            width: 28px;
+            height: 28px;
+            border: 2px solid #3a3a3c;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: transparent;
         }
-        .check-btn.active { background: var(--blue); border-color: var(--blue); color: #fff; }
-        
-        #empty { text-align: center; color: var(--grey); margin-top: 60px; display: none; }
+
+        .check-btn.active {
+            background-color: var(--blue);
+            border-color: var(--blue);
+            color: white;
+            transform: scale(1.1);
+        }
+
+        #empty {
+            text-align: center;
+            margin-top: 100px;
+            color: var(--grey);
+        }
+
+        .empty-icon { font-size: 50px; margin-bottom: 10px; display: block; }
     </style>
 </head>
 <body>
+
     <div class="header">
-        <h1 id="user-name">Задачи</h1>
-        <p id="date"></p>
+        <h1 id="user-name">Мой план</h1>
+        <p id="current-date"></p>
     </div>
 
-    <div id="list"></div>
-    <div id="empty">Все задачи выполнены! 🎉</div>
+    <div id="task-list" class="task-list"></div>
+
+    <div id="empty" style="display: none;">
+        <span class="empty-icon">🎯</span>
+        <p>Все задачи выполнены!<br>Добавьте новую в боте.</p>
+    </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-        tg.headerColor = '#000000';
+        tg.enableClosingConfirmation();
 
-        // Парсинг данных из URL
+        // 1. Получаем данные из URL
         const params = new URLSearchParams(window.location.search);
         const dataStr = params.get('data');
         let tasks = [];
-        
+
         if (dataStr) {
-            try { tasks = JSON.parse(decodeURIComponent(dataStr)); } catch(e) {}
+            try {
+                tasks = JSON.parse(decodeURIComponent(dataStr));
+            } catch (e) {
+                console.error("Data error");
+            }
         }
 
-        // Рендер
-        const listDiv = document.getElementById('list');
+        // 2. Установка даты
+        const dateOptions = { weekday: 'long', day: 'numeric', month: 'long' };
+        document.getElementById('current-date').innerText = new Date().toLocaleDateString('ru-RU', dateOptions);
+        document.getElementById('user-name').innerText = tg.initDataUnsafe.user?.first_name ? `План, ${tg.initDataUnsafe.user.first_name}` : "Мой план";
+
+        // 3. Рендер списка
+        const listContainer = document.getElementById('task-list');
+        
         if (tasks.length === 0) {
             document.getElementById('empty').style.display = 'block';
         } else {
-            listDiv.innerHTML = tasks.map(t => `
-                <div class="task-card" id="card-${t.id}">
-                    <div class="task-info">
-                        <h3>${t.title}</h3>
-                        <span>⏰ ${t.time}</span>
+            listContainer.innerHTML = tasks.map((t, index) => {
+                // Извлекаем иконку (первый символ)
+                const icon = t.title.substring(0, 2).trim();
+                const title = t.title.substring(2).trim();
+                
+                return `
+                    <div class="task-card" id="task-${t.id}" style="animation-delay: ${index * 0.1}s">
+                        <div class="category-icon">${icon || '📝'}</div>
+                        <div class="task-info">
+                            <h3>${title}</h3>
+                            <span>⏰ ${t.time}</span>
+                        </div>
+                        <div class="check-btn" onclick="markDone(${t.id})">✓</div>
                     </div>
-                    <div class="check-btn" onclick="complete(${t.id})">✓</div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
-        document.getElementById('date').innerText = new Date().toLocaleDateString('ru-RU', {day:'numeric', month:'long', weekday:'short'});
-
-        function complete(id) {
-            const btn = document.querySelector(`#card-${id} .check-btn`);
-            btn.classList.add('active');
+        // 4. Логика выполнения
+        function markDone(id) {
             tg.HapticFeedback.notificationOccurred('success');
+            const btn = document.querySelector(`#task-${id} .check-btn`);
+            btn.classList.add('active');
             
-            // Отправляем данные боту и закрываем окно через 500мс
+            const card = document.getElementById(`task-${id}`);
+            card.style.opacity = '0.5';
+            card.style.transform = 'scale(0.95)';
+
+            // Отправляем данные боту
             setTimeout(() => {
                 tg.sendData(JSON.stringify({action: "done", task_id: id}));
-            }, 500);
+            }, 600);
         }
     </script>
 </body>
