@@ -17,13 +17,13 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
             color: var(--text-color);
-            margin: 0;
-            padding: 20px;
-            min-height: 100vh;
+            margin: 0; padding: 20px; min-height: 100vh;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        h1 { font-size: 24px; color: var(--accent-color); margin-bottom: 20px; }
-
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        h1 { font-size: 24px; color: var(--accent-color); margin: 0; }
+        
         .task-card {
             background: var(--card-bg);
             backdrop-filter: blur(12px);
@@ -37,10 +37,7 @@
             animation: slideIn 0.3s ease-out;
         }
 
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         .task-info { flex-grow: 1; }
         .task-title { font-size: 16px; font-weight: 500; margin-bottom: 4px; }
@@ -52,15 +49,20 @@
             color: #fff;
             border: none;
             border-radius: 10px;
-            padding: 8px 16px;
-            font-weight: 600;
+            padding: 10px 18px;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);
         }
+
+        .btn-done:active { transform: scale(0.9); }
     </style>
 </head>
 <body>
-    <h1>Мой План</h1>
+    <div class="header">
+        <h1>Мой План</h1>
+    </div>
     <div id="task-list"></div>
-    <div id="empty-state" style="display:none; text-align:center; margin-top:50px; color:#64748b;">🎉 Все задачи выполнены!</div>
+    <div id="empty-state" style="display:none; text-align:center; margin-top:50px; color:#64748b;">🚀 Задач нет! Время отдыхать.</div>
 
     <script>
         const tg = window.Telegram.WebApp;
@@ -82,8 +84,7 @@
                 const card = document.createElement('div');
                 card.className = 'task-card';
                 
-                // Жесткая логика определения цвета точки
-                let dotColor = '#94a3b8'; // По умолчанию белый/серый
+                let dotColor = '#94a3b8';
                 if (task.title.includes('🔴')) dotColor = '#ef4444';
                 else if (task.title.includes('🟡')) dotColor = '#f59e0b';
                 else if (task.title.includes('🎙')) dotColor = '#38bdf8';
@@ -96,13 +97,17 @@
                             <span>⏰ ${task.time}</span>
                         </div>
                     </div>
-                    <button class="btn-done" onclick="completeTask(${task.id})">OK</button>
+                    <button class="btn-done" onclick="completeTask(${task.id})">DONE ⚡️</button>
                 `;
                 container.appendChild(card);
             });
         }
 
         function completeTask(id) {
+            // Вибрация (Haptic Feedback)
+            if (tg.HapticFeedback) {
+                tg.HapticFeedback.impactOccurred('medium');
+            }
             tg.sendData(JSON.stringify({ action: "done", task_id: id }));
             tg.close();
         }
