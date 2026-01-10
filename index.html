@@ -5,83 +5,80 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --bg-color: #000000; --card-bg: #1c1c1e; --accent-color: #0a84ff; --text-main: #ffffff; --text-secondary: #8e8e93; }
-        body { font-family: -apple-system, system-ui, sans-serif; background-color: var(--bg-color); color: var(--text-main); margin: 0; padding: 20px; -webkit-font-smoothing: antialiased; }
+        :root { --bg: #000; --card: #1c1c1e; --blue: #0a84ff; --text: #fff; --grey: #8e8e93; }
+        body { font-family: -apple-system, sans-serif; background: var(--bg); color: var(--text); padding: 20px; margin: 0; }
+        .header h1 { font-size: 28px; margin: 0; }
+        .header p { color: var(--grey); margin: 5px 0 25px; }
         
-        .header { margin-bottom: 25px; }
-        .header h1 { font-size: 32px; font-weight: 700; margin: 0; }
-        .header p { color: var(--text-secondary); margin: 5px 0 0; font-size: 15px; }
-
-        .task-list { display: flex; flex-direction: column; gap: 12px; }
         .task-card {
-            background: var(--card-bg);
-            border-radius: 14px;
-            padding: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            transition: transform 0.2s;
+            background: var(--card); border-radius: 12px; padding: 16px; 
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 10px; transition: all 0.3s;
         }
-        .task-card:active { transform: scale(0.98); }
-        .task-info h3 { margin: 0; font-size: 17px; font-weight: 500; }
-        .task-info span { color: var(--text-secondary); font-size: 13px; display: block; margin-top: 4px; }
+        .task-info h3 { margin: 0; font-size: 17px; }
+        .task-info span { color: var(--grey); font-size: 13px; }
         
-        .status-dot { width: 12px; height: 12px; background: var(--accent-color); border-radius: 50%; box-shadow: 0 0 10px var(--accent-color); }
+        .check-btn {
+            width: 26px; height: 26px; border: 2px solid #3a3a3c; 
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: transparent; font-size: 14px;
+        }
+        .check-btn.active { background: var(--blue); border-color: var(--blue); color: #fff; }
         
-        .empty-state { text-align: center; color: var(--text-secondary); margin-top: 50px; }
+        #empty { text-align: center; color: var(--grey); margin-top: 60px; display: none; }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1 id="title">Задачи</h1>
-        <p id="date-now"></p>
+        <h1 id="user-name">Задачи</h1>
+        <p id="date"></p>
     </div>
 
-    <div class="task-list" id="list">
-        </div>
-
-    <div id="empty" class="empty-state" style="display: none;">
-        Пока нет активных задач
-    </div>
+    <div id="list"></div>
+    <div id="empty">Все задачи выполнены! 🎉</div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-        tg.backgroundColor = '#000000';
         tg.headerColor = '#000000';
 
-        // Установка даты
-        const now = new Date();
-        const options = { weekday: 'long', day: 'numeric', month: 'long' };
-        document.getElementById('date-now').innerText = now.toLocaleDateString('ru-RU', options);
+        // Парсинг данных из URL
+        const params = new URLSearchParams(window.location.search);
+        const dataStr = params.get('data');
+        let tasks = [];
+        
+        if (dataStr) {
+            try { tasks = JSON.parse(decodeURIComponent(dataStr)); } catch(e) {}
+        }
 
-        // В реальном приложении мы бы делали fetch к серверу
-        // Но для теста покажем одну демо-задачу
-        const demoTasks = [
-            { title: "Проверить планировщик", time: "В процессе" }
-        ];
-
-        function renderTasks(tasks) {
-            const container = document.getElementById('list');
-            if (tasks.length === 0) {
-                document.getElementById('empty').style.display = 'block';
-                return;
-            }
-            container.innerHTML = tasks.map(t => `
-                <div class="task-card">
+        // Рендер
+        const listDiv = document.getElementById('list');
+        if (tasks.length === 0) {
+            document.getElementById('empty').style.display = 'block';
+        } else {
+            listDiv.innerHTML = tasks.map(t => `
+                <div class="task-card" id="card-${t.id}">
                     <div class="task-info">
                         <h3>${t.title}</h3>
                         <span>⏰ ${t.time}</span>
                     </div>
-                    <div class="status-dot"></div>
+                    <div class="check-btn" onclick="complete(${t.id})">✓</div>
                 </div>
             `).join('');
         }
 
-        renderTasks(demoTasks);
+        document.getElementById('date').innerText = new Date().toLocaleDateString('ru-RU', {day:'numeric', month:'long', weekday:'short'});
 
-        // Закрытие по кнопке "Готово" в Telegram
-        tg.MainButton.setText("ЗАКРЫТЬ").show().onClick(() => tg.close());
+        function complete(id) {
+            const btn = document.querySelector(`#card-${id} .check-btn`);
+            btn.classList.add('active');
+            tg.HapticFeedback.notificationOccurred('success');
+            
+            // Отправляем данные боту и закрываем окно через 500мс
+            setTimeout(() => {
+                tg.sendData(JSON.stringify({action: "done", task_id: id}));
+            }, 500);
+        }
     </script>
 </body>
 </html>
